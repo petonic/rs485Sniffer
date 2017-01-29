@@ -19,44 +19,37 @@ out the hex and ASCII interpretations.
 Written by: Mike Petonic [2017-01-29 SUN 09:56]
 """
 
-
-
 import serial
 import time
 import hexdump
 import sys
 from docopt import docopt
 
+def_device = '/dev/rs485'
+def_baud = 115200
 
-def_device    = '/dev/rs485'
-def_baud      = 115200
-
-defBurstInt   = 3.0           # One second default timeout
+defBurstInt = 3.0           # One second default timeout
 
 serialTimeout = 0.1           # Different than the burst
 
 
 # Make this a global variable
-arguments     = None
+arguments = None
 
-#open serial
+# open serial
+
 
 def main():
     global arguments            # Use the global so main can see it
 
     buff = b''
     buffpos = 0
-    lasttime=time.time()
-
-    #----> Contents of arguments when "sniff485 -b 12
-    #
-    # #(Pdb++) arguments
-    # {'--burst': ['12'],
-    #  '<baud>': None,
-    #  '<device>': None}
+    lasttime = time.time()
 
     ################################################################
-    # Parse the command-line arguments
+    # Parse the command-line arguments provided.
+    #
+    # arguments = {'--burst': ['12'], #  '<baud>': None, #  '<device>': None}
     ################################################################
 
     baud = def_baud
@@ -67,27 +60,28 @@ def main():
             baud = int(s_baud)
         except ValueError:
             print("Baud must be an INT, not <{}>".
-                format(s_baud),
-                file=sys.stderr)
+                  format(s_baud),
+                  file=sys.stderr)
             sys.exit(1)
 
     device = def_device
     s_device = arguments['<device>']
     if s_device:
-            device = s_device
-            # We'll do the open check later.
-            #
+        device = s_device
+        # We'll do the open check later.
+        #
 
     burstinterval = defBurstInt
     s_burst = arguments['--burst']
     if s_burst:
         try:
-            import pdb; pdb.set_trace()
+            import pdb
+            pdb.set_trace()
             burstinterval = float(s_burst[0])
         except (ValueError, FloatingPointError):
             print("BurstInt must be an FLOAT, not <{}>".
-                format(s_burst),
-                file=sys.stderr)
+                  format(s_burst),
+                  file=sys.stderr)
             sys.exit(1)
 
     ################################################################
@@ -106,8 +100,6 @@ def main():
               file=sys.stderr)
         sys.exit(2)
 
-
-
     ################################################################
     # Enter infinite loop.  Exit with keyboard interrupt (^c)
     ################################################################
@@ -117,18 +109,16 @@ def main():
         if len(inp):
             buff += inp
             lasttime = time.time()
-        if ((time.time() - lasttime) > burstinterval) or not(len(buff)%16):
+        if ((time.time() - lasttime) > burstinterval) or not(len(buff) % 16):
             # import pdb; pdb.set_trace()
             if len(buff):
                 # print("Len of buff is {}", len(buff))
                 outstring = hexdump.hexdump(buff, result='return')
                 print("{:08x}: {}".format(       # Don't print meaningless address
-                        buffpos, outstring[10:]))
+                    buffpos, outstring[10:]))
                 buffpos += len(buff)
                 buff = b''
-                lasttime=time.time()
-
-
+                lasttime = time.time()
 
 
 if __name__ == '__main__':
