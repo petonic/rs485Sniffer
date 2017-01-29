@@ -2,7 +2,7 @@
 """sniff485
 
 Usage:
-    sniff485 [-b|--burst=dur] [<device>] [<baud>]
+    sniff485 [-b <dur> | --burst=<dur>] [<device>] [<baud>]
 
 Options:
     -h --help           Show this screen.
@@ -28,14 +28,16 @@ import sys
 from docopt import docopt
 
 
-def_device = '/dev/rs485'
-def_baud   = 115200
+def_device    = '/dev/rs485'
+def_baud      = 115200
 
-defInterval = 3.0           # One second default timeout
+defBurstInt   = 3.0           # One second default timeout
+
+serialTimeout = 0.1           # Different than the burst
 
 
 # Make this a global variable
-arguments = None
+arguments     = None
 
 #open serial
 
@@ -76,7 +78,7 @@ def main():
             # We'll do the open check later.
             #
 
-    burstinterval = defInterval
+    burstinterval = defBurstInt
     s_burst = arguments['--burst']
     if s_burst:
         try:
