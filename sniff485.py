@@ -2,16 +2,19 @@
 """sniff485
 
 Usage:
-    sniff485 [-b <dur> | --burst=<dur>] [<device>] [<baud>]
+    sniff485 [-b <dur>] [-r] [<device>] [<baud>]
 
 Options:
-    -h --help           Show this screen.
-    -b N | --burst=N    Set batched burst secs (defaults to 3 secs)
+    -h --help    Show this screen.
+    -b           Set batched burst secs (defaults to 3 secs)
+    -r           Reset the position count every input burst (def'd by -b)
 
 <device> is the /dev/XXX pathname to the RS-485 serial adapter,
         defaults to "/dev/rs485"
 <baud> is the baud rate to sniff the bus at.  Defaults to 115200.
 
+  If -r is specified, then the position offset count is reset for
+  every input burst.
 
 CLI utility to sniff bytes on a serial interface and then print
 out the hex and ASCII interpretations.
@@ -49,7 +52,13 @@ def main():
     ################################################################
     # Parse the command-line arguments provided.
     #
-    # arguments = {'--burst': ['12'], #  '<baud>': None, #  '<device>': None}
+    # Given command: ./sniff485.py -b 12 -r
+    #   arguments are:
+    # {'-b': True, '-r': True, '<baud>': None, '<device>': None, '<dur>': '12'}
+    #
+    # Given command: ./sniff485.py -r
+    #   arguments are:
+    # {'-b': False, '-r': True, '<baud>': None, '<device>': None, '<dur>': None}
     ################################################################
 
     baud = def_baud
@@ -72,17 +81,17 @@ def main():
         #
 
     burstinterval = defBurstInt
-    s_burst = arguments['--burst']
+    s_burst = arguments['-b']
     if s_burst:
         try:
-            import pdb
-            pdb.set_trace()
             burstinterval = float(s_burst[0])
         except (ValueError, FloatingPointError):
             print("BurstInt must be an FLOAT, not <{}>".
                   format(s_burst),
                   file=sys.stderr)
             sys.exit(1)
+
+    resetCount = True if arguments['-r'] else False
 
     ################################################################
     # Initialize the serial device
@@ -109,16 +118,20 @@ def main():
         if len(inp):
             buff += inp
             lasttime = time.time()
-        if ((time.time() - lasttime) > burstinterval) or not(len(buff) % 16):
-            # import pdb; pdb.set_trace()
+        if ((time.time() - lasttime) > burstinterval):
             if len(buff):
-                # print("Len of buff is {}", len(buff))
                 outstring = hexdump.hexdump(buff, result='return')
                 print("{:08x}: {}".format(       # Don't print meaningless address
                     buffpos, outstring[10:]))
                 buffpos += len(buff)
                 buff = b''
                 lasttime = time.time()
+                if resetCount:
+                    buffpos = 0
+                    print("")
+
+
+
 
 
 if __name__ == '__main__':
