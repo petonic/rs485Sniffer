@@ -82,9 +82,9 @@ def main():
 
     burstinterval = defBurstInt
     s_burst = arguments['-b']
-    if s_burst:
+    if arguments['-b']:
         try:
-            burstinterval = float(s_burst[0])
+            burstinterval = float(arguments['<dur>'])
         except (ValueError, FloatingPointError):
             print("BurstInt must be an FLOAT, not <{}>".
                   format(s_burst),
